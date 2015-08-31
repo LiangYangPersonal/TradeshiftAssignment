@@ -1,0 +1,17 @@
+Tips
+
+ 1. Using embedded database for this assignment, so neither for the standalone server running or unit tests
+ doesn't need any database configurations.
+
+ 2. Do Mvn clean install to build restful server. The file is called  tradeshift-task-assembly-1.0-SNAPSHOT-bin.tar.gz
+ under /modules/tradeshift-task-assembly/target.
+
+ 3. unzip the file getting from the previous step to any folder.
+
+ 4. locate to the folder, setup an environment variable called $TRADESHIFT_HOME. (export TRADESHIFT_HOME=`pwd`)
+
+ 5. run the script under bin/start-tradeshift.sh. And the server should be good to go.
+
+ 6. run the script stop-tradeshift.sh to stop the server.
+
+ 7. the logs are under var/log/
