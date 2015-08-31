@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans  http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+    http://www.springframework.org/schema/util  http://www.springframework.org/schema/util/spring-util-3.1.xsd"
+       default-lazy-init="true">
+
+
+
+    <bean
+            class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+            scope="singleton" p:placeholderPrefix="$tradeshift:{" p:order="100"
+            p:systemPropertiesModeName="SYSTEM_PROPERTIES_MODE_OVERRIDE"
+            p:location="file:${TRADESHIFT_HOME}/config/tradeshift.properties" />
+    <bean
+            class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+            scope="singleton" p:placeholderPrefix="$tradeshift:{" p:order="99"
+            p:systemPropertiesModeName="SYSTEM_PROPERTIES_MODE_OVERRIDE"
+            p:location="file:${TRADESHIFT_HOME}/config/override-tradeshift.properties"
+            p:ignoreResourceNotFound="true"
+            p:ignoreUnresolvablePlaceholders="true" />
+
+
+    <!-- <bean id="basePackage" scope="singleton" class="java.lang.String"> 
+        <constructor-arg value="com.tradeshift" /> </bean> -->
+
+    <bean id="sysresolve" abstract="true" scope="singleton"
+          class="org.springframework.util.SystemPropertyUtils"
+          factory-method="resolvePlaceholders">
+    </bean>
+
+
+
+    <bean id="launcher" class="com.tradeshift.commons.launcher.RestfulServer"
+          scope="singleton" autowire-candidate="true">
+        <constructor-arg value="$tradeshift:{tradeshift.servjmxLauncherProxyer.host}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.port}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.basepath}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.threadpool.coresize}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.threadpool.maxsize}" />
+    </bean>
+
+   
+
+    <!-- jmx stuff -->
+    <bean id="jmxAttributeSource" scope="singleton"
+          class="org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource" />
+
+    <bean id="assembler" scope="singleton"
+          class="org.springframework.jmx.export.assembler.MetadataMBeanInfoAssembler"
+          p:attributeSource-ref="jmxAttributeSource" />
+
+    <bean id="namingStrategy" scope="singleton"
+          class="org.springframework.jmx.export.naming.MetadataNamingStrategy"
+          p:attributeSource-ref="jmxAttributeSource" />
+
+    <bean id="mbeanExporter" scope="singleton"
+          class="org.springframework.jmx.export.MBeanExporter"
+          p:assembler-ref="assembler" p:namingStrategy-ref="namingStrategy"
+          p:autodetect="true" />
+
+    <bean id="rmiRegistry" scope="singleton" class="java.rmi.registry.LocateRegistry"
+          factory-method="createRegistry">
+        <constructor-arg value="$tradeshift:{tradeshift.rmi.port}" />
+    </bean>
+
+    <bean id="serverConnector"
+          class="org.springframework.jmx.support.ConnectorServerFactoryBean"
+          p:serviceUrl="service:jmx:rmi://localhost/jndi/rmi://localhost:$tradeshift:{tradeshift.rmi.port}/server"
+          depends-on="rmiRegistry" />
+
+    <!-- jmx for client-side, serverUrl must match serverConnnector's above -->
+    <bean id="clientConnector"
+          class="org.springframework.jmx.support.MBeanServerConnectionFactoryBean"
+          p:serviceUrl="service:jmx:rmi://localhost/jndi/rmi://localhost:$tradeshift:{tradeshift.rmi.port}/server" />
+
+    <bean id="jmxLauncherProxy" class="org.springframework.jmx.access.MBeanProxyFactoryBean"
+          p:objectName="tradeshift:name=restfulserver" autowire-candidate="true"
+          p:proxyInterface="com.tradeshift.commons.launcher.ServerJMXBean"
+          p:server-ref="clientConnector" />
+
+</beans>

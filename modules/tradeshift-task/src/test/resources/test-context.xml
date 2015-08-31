@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd
+       http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd">
+
+    <context:annotation-config />
+    <context:component-scan base-package="com.tradeshift" />
+
+
+    <jdbc:embedded-database id="dataSource" type="HSQL">
+        <jdbc:script location="classpath:schema.sql"/>
+    </jdbc:embedded-database>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!-- properties -->
+    <bean
+            class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+            scope="singleton" lazy-init="false" p:placeholderPrefix="$tradeshift:{"
+            p:order="100" p:systemPropertiesModeName="SYSTEM_PROPERTIES_MODE_OVERRIDE"
+            p:location="classpath:test-tradeshift.properties">
+    </bean>
+
+    <bean
+            class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
+            scope="singleton" lazy-init="false" p:placeholderPrefix="$tradeshift:{"
+            p:ignoreResourceNotFound="true" p:ignoreUnresolvablePlaceholders="true"
+            p:order="99" p:systemPropertiesModeName="SYSTEM_PROPERTIES_MODE_OVERRIDE"
+            p:location="classpath:overwrite-test-tradeshift.properties">
+    </bean>
+
+
+    <!-- test server info -->
+    <bean id="testServerInfo" class="com.tradeshift.commons.launcher.TestServerInfo">
+        <constructor-arg value="$tradeshift:{tradeshift.server.schema}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.host}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.port}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.basepath}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.ctx}" />
+        <constructor-arg value="$tradeshift:{tradeshift.server.boot}" />
+    </bean>
+
+    <bean id="createTaskPipeline" parent="PipelineImpl" scope="singleton"
+          autowire-candidate="true">
+        <constructor-arg value="createTaskPipeline" />
+        <constructor-arg
+                value="com.tradeshift.payload.task.TaskPayload" />
+        <constructor-arg>
+            <list>
+                <ref bean="createTaskStage" />
+                <ref bean="genericGenerateResultStage" />
+            </list>
+        </constructor-arg>
+        <constructor-arg>
+            <list>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="assignedTaskToUserPipeline" parent="PipelineImpl" scope="singleton"
+          autowire-candidate="true">
+        <constructor-arg value="assignedTaskToUserPipeline" />
+        <constructor-arg
+                value="com.tradeshift.payload.task.TaskPayload" />
+        <constructor-arg>
+            <list>
+                <!--
+                    could put a validate stage here for checking like userid existence
+                -->
+                <ref bean="assignedTaskToUserStage" />
+                <ref bean="genericGenerateResultStage" />
+            </list>
+        </constructor-arg>
+        <constructor-arg>
+            <list>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="completeTaskPipeline" parent="PipelineImpl" scope="singleton"
+          autowire-candidate="true">
+        <constructor-arg value="completeTaskPipeline" />
+        <constructor-arg
+                value="com.tradeshift.payload.task.TaskPayload" />
+        <constructor-arg>
+            <list>
+                <ref bean="completeTaskStage" />
+                <ref bean="genericGenerateResultStage" />
+            </list>
+        </constructor-arg>
+        <constructor-arg>
+            <list>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="getTasksByUserIdPipeline" parent="PipelineImpl" scope="singleton"
+          autowire-candidate="true">
+        <constructor-arg value="getTasksByUserIdPipeline" />
+        <constructor-arg
+                value="com.tradeshift.payload.task.GetTasksByUserIdPayload" />
+        <constructor-arg>
+            <list>
+                <ref bean="getTasksByUserIdStage" />
+                <ref bean="getTasksByUserIdResultStage" />
+            </list>
+        </constructor-arg>
+        <constructor-arg>
+            <list>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="getTaskByUserIdPipeline" parent="PipelineImpl" scope="singleton"
+          autowire-candidate="true">
+        <constructor-arg value="getTaskByUserIdPipeline" />
+        <constructor-arg
+                value="com.tradeshift.payload.task.GetTaskByTaskIdPayload" />
+        <constructor-arg>
+            <list>
+                <ref bean="getTaskByTaskIdStage" />
+                <ref bean="getTaskByTaskIdResultStage" />
+            </list>
+        </constructor-arg>
+        <constructor-arg>
+            <list>
+            </list>
+        </constructor-arg>
+    </bean>
+
+</beans>
